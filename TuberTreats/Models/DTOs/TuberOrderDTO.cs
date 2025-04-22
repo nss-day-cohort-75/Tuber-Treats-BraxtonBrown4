@@ -1,3 +1,5 @@
+using TuberTreats.Models.DTOs;
+
 namespace TuberTreats.Models;
 
 public class TuberOrderDTO {
@@ -6,5 +8,7 @@ public class TuberOrderDTO {
     public int CustomerId {get; set;}
     public int? TuberDriverId {get; set;}
     public DateTime? DeliveredOnDate {get; set;}
-    public List<TuberTopping> Toppings {get; set;}
+    public CustomerDTO Customer {get; set;}
+    public TuberDriverDTO? TuberDriver {get; set;}
+    public List<ToppingDTO> Toppings {get; set;}
 }
