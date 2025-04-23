@@ -178,6 +178,8 @@ app.MapPost("/tuberorders", (TuberOrder tuberOrder) =>
     tuberOrder.Id = tuberOrders.Max(to => to.Id) + 1;
     tuberOrder.OrderPlacedOnDate = DateTime.Now;
 
+    tuberOrders.Add(tuberOrder);
+
     return Results.Created(
         $"/tuberorders/{tuberOrder.Id}",
 
@@ -321,7 +323,8 @@ app.MapGet("/toppings/{id}", (int id) =>
     );
 });
 
-app.MapGet("/tubertoppings", () => {
+app.MapGet("/tubertoppings", () =>
+{
     return tuberToppings.Select(tuberTopping => new TuberToppingDTO
     {
         Id = tuberTopping.Id,
@@ -330,10 +333,12 @@ app.MapGet("/tubertoppings", () => {
     });
 });
 
-app.MapPost("/tubertoppings", (TuberTopping tuberTopping) => {
+app.MapPost("/tubertoppings", (TuberTopping tuberTopping) =>
+{
     TuberTopping doesExist = tuberToppings.FirstOrDefault(tt => tt.TuberOrderId == tuberTopping.TuberOrderId && tt.ToppingId == tuberTopping.ToppingId);
 
-    if (doesExist != null) {
+    if (doesExist != null)
+    {
         return Results.BadRequest("JoinTable Already Exists");
     }
 
@@ -343,7 +348,8 @@ app.MapPost("/tubertoppings", (TuberTopping tuberTopping) => {
 
     return Results.Created(
         $"/toppings/{tuberTopping.Id}",
-        new TuberToppingDTO {
+        new TuberToppingDTO
+        {
             Id = tuberTopping.Id,
             ToppingId = tuberTopping.ToppingId,
             TuberOrderId = tuberTopping.TuberOrderId
@@ -351,29 +357,110 @@ app.MapPost("/tubertoppings", (TuberTopping tuberTopping) => {
     );
 });
 
-app.MapDelete("/tubertoppings/{id}", (int id) => {
+app.MapDelete("/tubertoppings/{id}", (int id) =>
+{
     TuberTopping tuberTopping = tuberToppings.FirstOrDefault(tuberTopping => tuberTopping.Id == id);
 
-    if (tuberTopping == null) {
+    if (tuberTopping == null)
+    {
         return Results.NotFound();
     }
 
     tuberToppings.Remove(tuberTopping);
 
-    return Results.Accepted();
+    return Results.NoContent();
+});
+
+app.MapGet("/customers", () =>
+{
+    return customers.Select(c => new CustomerDTO
+    {
+        Id = c.Id,
+        Name = c.Name,
+        Address = c.Address,
+        TuberOrders = tuberOrders.Where(to => to.CustomerId == c.Id).ToList()
+    });
+});
+
+app.MapGet("/customers/{id}", (int id) =>
+{
+    Customer c = customers.FirstOrDefault(c => c.Id == id);
+
+    if (c == null)
+    {
+        return Results.NotFound();
+    }
+
+    return Results.Ok(
+        new CustomerDTO
+        {
+            Id = c.Id,
+            Name = c.Name,
+            Address = c.Address,
+            TuberOrders = tuberOrders.Where(to => to.CustomerId == c.Id).ToList()
+        }
+    );
+});
+
+app.MapPost("/customers", (Customer customer) =>
+{
+    if (customer.Name == null || customer.Address == null)
+    {
+        return Results.BadRequest();
+    }
+
+    customer.Id = customers.Max(c => c.Id) + 1;
+
+    customers.Add(customer);
+
+    return Results.Created(
+        $"/customers/{customer.Id}",
+        new CustomerDTO
+        {
+            Id = customer.Id,
+            Name = customer.Name,
+            Address = customer.Address
+        }
+    );
+});
+
+app.MapDelete("/customers/{id}", (int id) => {
+    
+    Customer customer = customers.FirstOrDefault(c => c.Id == id);
+
+    if (customer == null) {
+        return Results.NotFound();
+    }
+
+    customers.Remove(customer);
+
+    return Results.NoContent();
+});
+
+app.MapGet("/tuberdrivers", () => {
+    return tuberDrivers.Select(td => new TuberDriverDTO {
+        Id = td.Id,
+        Name = td.Name,
+        TuberDeliveries = tuberOrders.Where(to => to.TuberDriverId == td.Id).ToList()
+    });
+});
+
+app.MapGet("/tuberdrivers/{id}", (int id) => {
+    TuberDriver tuberDriver = tuberDrivers.FirstOrDefault(td => td.Id == id);
+
+    if (tuberDriver == null) {
+        return Results.NotFound();
+    }
+
+    return Results.Ok(
+        new TuberDriverDTO {
+        Id = tuberDriver.Id,
+        Name = tuberDriver.Name,
+        TuberDeliveries = tuberOrders.Where(to => to.TuberDriverId == tuberDriver.Id).ToList()
+    }
+    );
 });
 
 app.Run();
 //don't touch or move this!
 public partial class Program { }
-
-/*
-/customers
-Get all Customers
-Get a customer by id, with their orders
-Add a Customer (return the new customer)
-Delete a Customer
-/tuberdrivers
-Get all employees
-Get an employee by id with their deliveries
-*/
